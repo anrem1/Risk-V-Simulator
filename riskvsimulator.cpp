@@ -13,7 +13,7 @@ map<string, string> registers;
 void initialize_regs() {
     for (int i = 0; i <= 31; ++i) {
         string reg_name = "x" + to_string(i);
-       registers[reg_name] = "";
+        registers[reg_name] = "";
     }
     registers["x0"] = "0";
 }
@@ -48,7 +48,7 @@ int main() {
     if (!file.is_open()) {
         cout << "Error opening file" << endl;
     }
-     string mem_addr;
+    string mem_addr;
     if (getline(file, mem_addr)) {
         cout << "Memory Address: " << mem_addr << endl;
     } else {
@@ -62,30 +62,79 @@ int main() {
         string operation, rd, rs1, rs2;
         iss >> operation;
         
-        registers["x2"] = "12";			// example
-        registers["x3"] = "10";
-        
-        
+        registers["x2"] = "2";			// examples
+        registers["x4"] = "4";
+        registers["x5"] = "5";
+        registers["x7"] = "7";
+        registers["x8"] = "8";
+        registers["x10"] = "10";
+        registers["x12"] = "12";
+        registers["x13"] = "1";
+        registers["x15"] = "8";
+        registers["x16"] = "6";
+        registers["x18"] = "18";
+        registers["x19"] = "0";
+        registers["x21"] = "2";
+        registers["x23"] = "3";	
+        registers["x25"] = "9";    
+        registers["x27"] = "4";
+        registers["x29"] = "3";
+        registers["x31"] = "4";
+			  
         if(operation == "add") {
-         store_values(iss, rd, rs1, rs2);
-         registers[rd] = to_string(stoi(registers[rs1]) + stoi(registers[rs2]));
-         pc += 4;
+            store_values(iss, rd, rs1, rs2);
+            registers[rd] = to_string(stoi(registers[rs1]) + stoi(registers[rs2]));
         } else if(operation == "sub") {
-        store_values(iss, rd, rs1, rs2);
-       	registers[rd] = to_string(stoi(registers[rs1]) - stoi(registers[rs2]));
-         pc += 4;
+            store_values(iss, rd, rs1, rs2);
+            registers[rd] = to_string(stoi(registers[rs1]) - stoi(registers[rs2]));
         } else if(operation == "sll") {
-        	
-        } else if(operation == "slt") {
-        } else if(operation == "sltu") {
-        } else if(operation == "xor") {
-        } else if(operation == "addi") {
-        } else if(operation == "slti") {
-        } else if(operation == "sltiu") {
-        } else if(operation == "xori") {
-        } else if(operation == "ori") {
-        } else if(operation == "andi") {
+            store_values(iss, rd, rs1, rs2);
+            registers[rd] =  to_string(stoi(registers[rs1]) << stoi(registers[rs2]));
         } else if(operation == "slli") {
+            store_values(iss, rd, rs1, rs2);
+            registers[rd] =  to_string(stoi(registers[rs1]) << stoi(rs2));
+        } else if(operation == "slt") {
+            store_values(iss, rd, rs1, rs2);
+            if(stoi(registers[rs1]) < stoi(registers[rs2]))
+                registers[rd] = "1";
+            else
+                registers[rd] = "0";
+        } else if(operation == "sltu") {
+            store_values(iss, rd, rs1, rs2);
+            if(stoul(registers[rs1]) < stoul(registers[rs2])) {
+                registers[rd] = "1";
+            } else {
+                registers[rd] = "0";
+            }
+        } else if(operation == "xor") {
+            store_values(iss, rd, rs1, rs2);
+            registers[rd] = to_string(stoul(registers[rs1]) ^ stoul(registers[rs2]));
+        } else if(operation == "addi") {
+            store_values(iss, rd, rs1, rs2);
+            registers[rd] = to_string(stoi(registers[rs1]) + stoi(rs2));
+        } else if(operation == "slti") {
+            store_values(iss, rd, rs1, rs2);
+            if(stoi(registers[rs1]) < stoi(rs2)) {
+                registers[rd] = "1";
+            } else {
+                registers[rd] = "0";
+            }
+        } else if(operation == "sltiu") {
+            store_values(iss, rd, rs1, rs2);
+            if(stoul(registers[rs1]) < stoul(rs2)) {
+                registers[rd] = "1";
+            } else {
+                registers[rd] = "0";
+            }
+        } else if(operation == "xori") {
+            store_values(iss, rd, rs1, rs2);
+            registers[rd] = to_string(stoul(registers[rs1]) ^ stoul(rs2));
+        } else if(operation == "ori") {
+            store_values(iss, rd, rs1, rs2);
+            registers[rd] = to_string(stoul(registers[rs1]) | stoul(rs2));
+        } else if(operation == "andi") {
+            store_values(iss, rd, rs1, rs2);
+            registers[rd] = to_string(stoul(registers[rs1]) & stoul(rs2));
         }
         print_state();
     }
