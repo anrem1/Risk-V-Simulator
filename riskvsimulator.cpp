@@ -180,7 +180,6 @@ void program::output()
         cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
         for (auto i : Memory)
             cout << left << "                     " << i.first << "                     " << i.second << endl;// <<<< "                     "<< DecToBin(i.second) <<"                     " << DecToHex(i.second) 
-    }
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
     cout << "Program Counter:" << endl << PC << endl;
 }
