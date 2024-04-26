@@ -166,23 +166,20 @@ void program::output()
 {
     cout << "Register Values:" << endl;
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
-    cout << left << setw(16) << "Register Name" << setw(20) << "Register Number" << setw(40) << "Binary Value" << setw(20) << "Decimal Value" << setw(20) << "Hexadecimal Value" << endl;
+    cout << left << "                     "<< "Register Name" << "                     "<< "Register Number" << "                     "<< "Binary Value" << "                     "<< "Decimal Value" << "                     "<< "Hexadecimal Value" << endl;
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
     for (int i = 0; i < 32; i++)
     {
-        cout << left << setw(16) << RegistersN[i] << setw(20) << "x" + to_string(i) << setw(40) << Reg[i] << endl;// << setw(40) << DecToBin(Reg[i])  << setw(25) << DecToHex(Reg[i])
+        cout << left << "                     " << RegistersN[i] << "                     " << "x" + to_string(i) << "                     " << Reg[i] << endl;// << "                     " << DecToBin(Reg[i])  << "                     "<< DecToHex(Reg[i])
     }
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
-    if (Memory.empty())
-        cout << "No values stored in memory." << endl;
-    else
-    {
+
         cout << "Memory Values:" << endl;
         cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
-        cout << left << setw(16) << "Memory Address" << setw(40) << "Binary Value" << setw(20) << "Decimal Value" << setw(20) << "Hexadecimal Value" << endl;
+        cout << left << "                     " << "Memory Address" << "                     " << "Binary Value" << "                     "<< "Decimal Value" <<"                     " << "Hexadecimal Value" << endl;
         cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
         for (auto i : Memory)
-            cout << left << setw(16) << i.first << setw(40) << i.second << endl;// <<<< setw(40) << DecToBin(i.second) << setw(25) << DecToHex(i.second) 
+            cout << left << "                     " << i.first << "                     " << i.second << endl;// <<<< "                     "<< DecToBin(i.second) <<"                     " << DecToHex(i.second) 
     }
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
     cout << "Program Counter:" << endl << PC << endl;
