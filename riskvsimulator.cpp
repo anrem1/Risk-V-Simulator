@@ -8,8 +8,8 @@ using namespace std;
 class program
 {
 public:
+    void run();
 	program(string , string, unsigned int );
-	void output();
 private:
     vector<string> uformat = { "LUI", "AUIPC"};
 	vector<string> OffsetIformat = { "JALR", "LB", "LH", "LW", "LBU", "LHU"};
@@ -37,7 +37,6 @@ private:
 	map<string, unsigned int> funcs;
 	string file;
 	string data;
-	unsigned int returnindex(); 
     bool checkinteger(string);
 	bool checkregister(string);
 	//int bintodec(string binary);
@@ -147,22 +146,19 @@ void program::getoperation()
 
 void program::dooperation()
 {
-	int instructionlen = alloperations.size();
-	if (funcs.find("start") != funcs.end()) {
-		setPC(funcs.find("start")->second);
-	}
-	int INDEX = returnindex();
-	output();
-	while(INDEX < instructionlen) {
-		vector<string> instruction = alloperations.at(INDEX);
-		if (instruction.at(0) ==  "EBREAK" || instruction.at(0) == "ECALL"|| instruction.at(0) == "FENCE"){break;}
-		dooo(instruction);
-		output();
+	int operationsize = alloperations.size();
+	int INDEX = (PC - startingPC) / 4;
+	run();
+	while(INDEX < operationsize) {
+		vector<string> operation = alloperations.at(INDEX);
+		if (operation.at(0) ==  "EBREAK" || operation.at(0) == "ECALL"|| operation.at(0) == "FENCE"){break;}
+		dooo(operation);
+		run();
 		PC = PC + 4;
-		INDEX = returnindex();
+		INDEX = (PC - startingPC) / 4;
 	}
 }
-void program::output()
+void program::run()
 {
     cout << "Register Values:" << endl;
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
@@ -180,6 +176,7 @@ void program::output()
         cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
         for (auto i : Memory)
             cout << left << "                     " << i.first << "                     " << i.second << endl;// <<<< "                     "<< DecToBin(i.second) <<"                     " << DecToHex(i.second) 
+    
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
     cout << "Program Counter:" << endl << PC << endl;
 }
@@ -257,10 +254,6 @@ int program::HaveR(string in) {
         return 0;
     }
     return Reg[registernm];
-}
-unsigned int program::returnindex()
-{
-	return (PC - startingPC) / 4;
 }
 
 bool program::checkinteger(string s) {
