@@ -24,6 +24,7 @@ private:
 	void setPC(unsigned int);
 	unsigned int getPC();
 	void DoR(string, int);
+    bool populate();
 	int HaveR(string);
 	void errorr(string); 
 	// string DecToHex(int outt);
@@ -97,12 +98,49 @@ program::program(string filee, string dataa, unsigned int startingPC)
 	Memory.clear();
 	rawoperations.clear();
 	alloperations.clear();
-	getoperation();
-	PC = startingPC;
-	for (int i = 0; i < 32; i++) {
+    	for (int i = 0; i < 32; i++) {
 		Reg[i] = 0;
 	}
+    PC = startingPC;
+   	getoperation();
 }
+bool program::populate() {
+    int length = rawoperations.size();
+    if (rawoperations.empty()) {
+        errorr("No operations found.");
+        return false;
+    }
+    if (PC < 0) {
+        errorr("Make PC positive number");
+        return false;
+    }
+    for (int i = 1; i < length; i++) {
+        string j = rawoperations.at(i);
+        if (j.find(':') != string::npos) {
+            j.erase(remove_if(j.begin(), j.end(), static_cast<int(*)(int)>(isspace)), j.end());
+                j.erase(j.end() - 1, j.end());
+                transform(j.begin(), j.end(), j.begin(), ::toupper);
+                funcs.insert(pair<string, unsigned int>(j, getPC() + (alloperations.size()*4)));
+        }
+        else {
+            transform(j.begin(), j.end(), j.begin(), ::toupper);
+            replace(j.begin(), j.end(), ',', ' ');
+            replace(j.begin(), j.end(), ';', ' ');
+            istringstream inst(j);
+            string token;
+            vector<string> operation;
+            while (inst >> token) {
+                operation.push_back(token);
+            }
+            if (operation.empty()) {
+                continue;
+            }
+            alloperations.push_back(operation);
+        }
+    }
+    return true;
+}
+
 
 void program::getoperation()
 {
@@ -117,6 +155,9 @@ void program::getoperation()
         rawoperations.push_back(data_line);
     }
     input_file.close();
+    if (!populate()) {
+        return;
+    }
     input_file.open(data);
     if (!input_file.is_open()) {
         errorr("Failed to open data file");
@@ -148,12 +189,11 @@ void program::dooperation()
 {
 	int operationsize = alloperations.size();
 	int INDEX = (PC - startingPC) / 4;
-	run();
 	while(INDEX < operationsize) {
 		vector<string> operation = alloperations.at(INDEX);
 		if (operation.at(0) ==  "EBREAK" || operation.at(0) == "ECALL"|| operation.at(0) == "FENCE"){break;}
 		dooo(operation);
-		run();
+        run();
 		PC = PC + 4;
 		INDEX = (PC - startingPC) / 4;
 	}
