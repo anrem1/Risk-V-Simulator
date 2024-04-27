@@ -332,8 +332,9 @@ bool program::checkregister(string str)
     return false;
 }
 
-void program:: dooo(vector<string> operationn) { // cases for the functions 
+void program::dooo(vector<string> operationn) {
     string oper = operationn.at(0);
+    
     if (oper == "add") {
         ADD(operationn);
     } else if (oper == "addi") {
@@ -388,10 +389,26 @@ void program:: dooo(vector<string> operationn) { // cases for the functions
         SLT(operationn);
     } else if (oper == "slti") {
         SLTI(operationn);
-    } else if (oper == "sltiu") {
-        SLTIU(operationn);
+    } else if (oper == "mul") {
+        MUL(operationn);
+    } else if (oper == "mulh") {
+        MULH(operationn);
+    } else if (oper == "mulhu") {
+        MULHU(operationn);
+    } else if (oper == "mulhsu") {
+        MULHSU(operationn);
+    } else if (oper == "div") {
+        DIV(operationn);
+    } else if (oper == "divu") {
+        DIVU(operationn);
+    } else if (oper == "rem") {
+        REM(operationn);
+    } else if (oper == "remu") {
+        REMU(operationn);
     } else if (oper == "sltu") {
         SLTU(operationn);
+    } else if (oper == "sltiu") {
+        SLTIU(operationn);
     } else if (oper == "sra") {
         SRA(operationn);
     } else if (oper == "srai") {
@@ -409,9 +426,11 @@ void program:: dooo(vector<string> operationn) { // cases for the functions
     } else if (oper == "xori") {
         XORI(operationn);
     } else {
-       errorr("Wrong Operation");
+        // Handle unknown operation
+        cout << "Unknown operation: " << oper << endl;
     }
 }
+
 // Function to check if a string represents a valid immediate value
 bool program::isValidImmediate(const string& immediateStr, int& immediate) {
     try {
@@ -981,19 +1000,28 @@ string program::decimalToBinary(int number)
     return binary;
 }
 
-
-int main() {
-	string alloperations = "instructions.txt";
-	string data = "Data.txt";
-    int sPC;
-    cout << "Enter the starting PC: "<< endl;
-    cin >> sPC;
-    while (sPC<0||sPC%4!=0){
-    if (sPC<0) cout << "Don't make the starting address a negative number"<< endl;
-    if (sPC%4!=0)cout << "Starting address should be divisible by 4"<< endl;
-    cout << "Enter the starting PC: "<< endl;
-    cin >> sPC;
+int main(int argc, char *argv[]) {
+    if (argc != 4) {
+        cout << "Usage: " << argv[0] << " <instruction_file> <data_file> <starting_PC>" << endl;
+        return 1; 
     }
+
+    string alloperations = argv[1];
+    string data = argv[2];
+    int sPC = stoi(argv[3]); 
+
+    // Validate sPC
+    while (sPC < 0 || sPC % 4 != 0) {
+        if (sPC < 0)
+            cout << "Don't make the starting address a negative number" << endl;
+        if (sPC % 4 != 0)
+            cout << "Starting address should be divisible by 4" << endl;
+        cout << "Enter the starting PC: ";
+        cin >> sPC;
+    }
+
+
     program run(alloperations, data, sPC);
-	return 0;
+
+    return 0;
 }
