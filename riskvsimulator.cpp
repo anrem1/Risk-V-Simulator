@@ -11,19 +11,19 @@ public:
     void run();
 	program(string , string, unsigned int );
 private:
-    vector<string> uformat = { "LUI", "AUIPC"};
-	vector<string> OffsetIformat = { "JALR", "LB", "LH", "LW", "LBU", "LHU"};
-	vector<string> Iformat = { "ADDI", "SLTI", "SLTIU", "XORI", "ORI", "ANDI", "SLLI", "SRLI", "SRAI"};
-	vector<string> sformat = { "SW", "SB", "SH" };
-	vector<string> sbformat = { "BEQ", "BNE", "BLT", "BGE", "BLTU", "BGEU"};
-	vector<string> rformat = { "ADD", "SUB", "SLL", "SLT", "SLTU", "XOR", "SRL", "SRA", "OR", "AND", "MUL", "MULH", "MULHU", "MULHSU","DIV","DIVU","REM","REMU"};
-	vector<string> RegistersN = { "ZERO", "RA", "SP", "GP", "TP", "T0", "T1", "T2", "S0", "S1", "A0", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11", "T3", "T4", "T5", "T6" };
+map<string, string> RegisterHash = {
+    {"zero", "x0"}, {"ra", "x1"}, {"sp", "x2"}, {"gp", "x3"}, {"tp", "x4"},
+    {"t0", "x5"}, {"t1", "x6"}, {"t2", "x7"}, {"s0", "x8"}, {"s1", "x9"},
+    {"a0", "x10"}, {"a1", "x11"}, {"a2", "x12"}, {"a3", "x13"}, {"a4", "x14"},
+    {"a5", "x15"}, {"a6", "x16"}, {"a7", "x17"}, {"s2", "x18"}, {"s3", "x19"},
+    {"s4", "x20"}, {"s5", "x21"}, {"s6", "x22"}, {"s7", "x23"}, {"s8", "x24"},
+    {"s9", "x25"}, {"s10", "x26"}, {"s11", "x27"}, {"t3", "x28"}, {"t4", "x29"},
+    {"t5", "x30"}, {"t6", "x31"}
+};
+	vector<string> RegistersN = { "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6" };
 	void getoperation();
 	void dooperation();
 	void dooo(vector<string> instruction);
-	void setPC(unsigned int);
-	unsigned int getPC();
-	void DoR(string, int);
     bool populate();
 	int HaveR(string);
 	void errorr(string); 
@@ -32,17 +32,19 @@ private:
 	unsigned int PC;
 	unsigned int startingPC;
 	map<unsigned int, int> Memory;
+    void setPC(unsigned int);
+	unsigned int getPC();
+	void DoR(string, int);
 	int Reg[32];
 	vector<string> rawoperations;
 	vector<vector<string>> alloperations;
-	map<string, unsigned int> funcs;
+	map<string, unsigned int> labels;
 	string file;
 	string data;
-    bool checkinteger(string);
 	bool checkregister(string);
 	//int bintodec(string binary);
     //	bool errorfinder(); and put it in the dooperation
-    bool isValidImmediate(const string& immStr, int& imm);
+    bool isValidImmediate(const string& , int& );
     void AND(vector<string> );
     void ANDI(vector<string> );
     void ADD(vector<string> );
@@ -91,409 +93,436 @@ private:
     void XOR(vector<string> );
     void XORI(vector<string> );
 };
-program::program(string filee, string dataa, unsigned int sPC)
-{
-	file = filee;
-	data = dataa;
-	Memory.clear();
-	rawoperations.clear();
-	alloperations.clear();
-    	for (int i = 0; i < 32; i++) {
-		Reg[i] = 0;
-	}
-    PC = sPC;
-    startingPC = sPC; 
-   	getoperation();
+// Constructor for program class
+program::program(string filee, string dataa, unsigned int sPC) {
+    file = filee; // Assigning file name
+    data = dataa; // Assigning data
+    Memory.clear(); // Clearing Memory
+    rawoperations.clear(); // Clearing raw operations
+    alloperations.clear(); // Clearing all operations
+    // Initializing register values to 0
+    for (int i = 0; i < 32; i++) {
+        Reg[i] = 0;
+    }
+    PC = sPC; // Setting program counter
+    startingPC = sPC; // Setting starting program counter
+    getoperation(); // Calling getoperation function
 }
+
+// Function to populate operations
 bool program::populate() {
-    int length = rawoperations.size();
-    if (rawoperations.empty()) {
-        errorr("No operations found.");
-        return false;
+    int length = rawoperations.size(); // Getting size of raw operations
+    if (rawoperations.empty()) { // Checking if raw operations is empty
+        errorr("Empty file"); // Outputting error message
+        return false; //  false
     }
-    if (PC < 0) {
-        errorr("Make PC positive number");
-        return false;
-    }
-    for (int i = 0; i < length; i++) {
-        string j = rawoperations.at(i);
-        if (j.find(':') != string::npos) {
-            j.erase(remove_if(j.begin(), j.end(), static_cast<int(*)(int)>(isspace)), j.end());
-                j.erase(j.end() - 1, j.end());
-                transform(j.begin(), j.end(), j.begin(), ::toupper);
-                funcs.insert(pair<string, unsigned int>(j, getPC() + (alloperations.size()*4)));
-        }
-        else {
-            transform(j.begin(), j.end(), j.begin(), ::toupper);
-            replace(j.begin(), j.end(), ',', ' ');
-            replace(j.begin(), j.end(), ';', ' ');
-            istringstream inst(j);
-            string token;
-            vector<string> operation;
-            while (inst >> token) {
-                operation.push_back(token);
+    for (int i = 0; i < length; i++) { // Looping through raw operations
+        string j = rawoperations.at(i); // Getting current operation
+        if (j.find(':') != string::npos) { // Checking if operation contains a label
+            j.erase(remove_if(j.begin(), j.end(), static_cast<int(*)(int)>(isspace)), j.end()); // Removing white spaces
+            j.erase(j.end() - 1, j.end()); // Removing last character
+            transform(j.begin(), j.end(), j.begin(), ::tolower); // Converting to lowercase
+            labels.insert(pair<string, unsigned int>(j, getPC() + (alloperations.size()*4))); // Inserting label into map
+        } else { // If operation doesn't contain a label
+            transform(j.begin(), j.end(), j.begin(), ::tolower); // Converting to lowercase
+            replace(j.begin(), j.end(), ',', ' '); // Replacing commas with spaces
+            replace(j.begin(), j.end(), ';', ' '); // Replacing semicolons with spaces
+            istringstream inst(j); // Creating string stream
+            string token; // Token variable
+            vector<string> operation; // Vector to store operation tokens
+            while (inst >> token) { // Tokenizing operation string
+                operation.push_back(token); // Pushing token into vector
             }
-            if (operation.empty()) {
-                continue;
+            if (operation.empty()) { // Checking if operation vector is empty
+                continue; // Continue to next iteration
             }
-            alloperations.push_back(operation);
-         
+            alloperations.push_back(operation); // Pushing operation into alloperations vector
         }
     }
-    return true;
+    return true; //  true
 }
 
+// Function to read operations from instruction and data files
+void program::getoperation() {
+    ifstream input_file; // Input file stream
+    string data_line; // String to store each line of data
+    input_file.open(file); //  instruction file
 
-void program::getoperation()
-{
-    ifstream input_file;
-    string data_line;
-    input_file.open(file);
+    // Check if instruction file opened successfully
     if (!input_file.is_open()) {
-        errorr("Failed to open instruction file");
-        return;
+        errorr("Failed to open instruction file"); // Outputting error message
+        return; // 
     }
+
+    // Reading each line from instruction file and adding it to rawoperations vector
     while (getline(input_file, data_line)) {
-        rawoperations.push_back(data_line);
+        rawoperations.push_back(data_line); // Adding each line to rawoperations vector
     }
-    input_file.close();
+    input_file.close(); // Closing instruction file
+
+    // Populating operations vector
     if (!populate()) {
-        return;
+        return; //  if population fails
     }
-    input_file.open(data);
+
+    input_file.open(data); //  data file
+
+    // Check if data file opened successfully
     if (!input_file.is_open()) {
-        errorr("Failed to open data file");
-        return;
+        errorr("Failed to open data file"); // Outputting error message
+        return; // 
     }
-    while (getline(input_file, data_line))
-    {
-        if (data_line.empty()) {
+
+    // Reading each line from data file and inserting memory location and data value into Memory map
+    while (getline(input_file, data_line)) {
+        if (data_line.empty()) { // Skipping empty lines
             continue;
         }
-        int separator  = data_line.find(',');
-        unsigned int memory_location;
-        int data_value;
+        int separator = data_line.find(','); // Finding separator (',')
+        unsigned int memory_location; // Variable to store memory location
+        int data_value; // Variable to store data value
 
-        memory_location = stoi(data_line.substr(0, separator ));
-        data_value = stoi(data_line.substr(separator  + 1, data_line.length()));
+        // getting memory location and data value from line
+        memory_location = stoi(data_line.substr(0, separator));
+        data_value = stoi(data_line.substr(separator + 1, data_line.length()));
 
-        if (memory_location % 4 != 0 ||  memory_location >= PC && memory_location < PC + (alloperations.size() * 4)) {
-            errorr("Error reading the file. ");
-            return;
-        }
+        // Inserting memory location and data value into Memory map
         Memory.insert(pair<unsigned int, int>(memory_location, data_value));
     }
-    input_file.close();
-    dooperation();
+    input_file.close(); // Closing data file
+
+    dooperation(); // Performing operations
 }
 
-void program::dooperation()
-{
-	int operationsize = alloperations.size();	
-	int INDEX = (PC - startingPC) / 4;
-    run();
+// Function to execute operations
+void program::dooperation() {
+    int operationsize = alloperations.size(); // Getting size of operations vector
+    int INDEX = (PC - startingPC) / 4; // Calculating index based on current program counter
+    run(); 
 
-	while(INDEX < operationsize) {
-		vector<string> operation = alloperations.at(INDEX);
-		if (operation.at(0) ==  "EBREAK" || operation.at(0) == "ECALL"|| operation.at(0) == "FENCE"){break;}
-		dooo(operation);
-		PC = PC + 4;
-		INDEX = (PC - startingPC) / 4;
-        run();
-	}
+    // Looping through operations vector
+    while (INDEX < operationsize) {
+        vector<string> operation = alloperations.at(INDEX); // Getting current operation
+
+        // Checking for control operations and breaking if encountered
+        if (operation.at(0) == "ebreak" || operation.at(0) == "ecall" || operation.at(0) == "fence") {
+            break;
+        }
+
+        dooo(operation); // Executing current operation
+        PC = PC + 4; // Incrementing program counter by 4
+        INDEX = (PC - startingPC) / 4; // Updating index based on new program counter
+        run(); // Running program
+    }
 }
+
 void program::run()
 {
     cout << "Register Values:" << endl;
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
-    cout << left << "                     "<< "Register Name" << "                     "<< "Register Number" << "                     "<< "Binary Value" << "                     "<< "Decimal Value" << "                     "<< "Hexadecimal Value" << endl;
+    cout << "                     "<< "Register Name" << "                     "<< "Register Number" << "                     "<< "Binary Value" << "                     "<< "Decimal Value" << "                     "<< "Hexadecimal Value" << endl;
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
     for (int i = 0; i < 32; i++)
     {
-        cout << left << "                     " << RegistersN[i] << "                     " << "x" + to_string(i) << "                     " << Reg[i] << endl;// << "                     " << DecToBin(Reg[i])  << "                     "<< DecToHex(Reg[i])
+        cout << "                     " << RegistersN[i]<< "                     " <<   "x" + to_string(i) << "                     " << Reg[i] << endl;// << "                     " << DecToBin(Reg[i])  << "                     "<< DecToHex(Reg[i])
     }
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
 
         cout << "Memory Values:" << endl;
         cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
-        cout << left << "                     " << "Memory Address" << "                     " << "Binary Value" << "                     "<< "Decimal Value" <<"                     " << "Hexadecimal Value" << endl;
+        cout <<"                     " << "Memory Address" << "                     " << "Binary Value" << "                     "<< "Decimal Value" <<"                     " << "Hexadecimal Value" << endl;
         cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
         for (auto i : Memory)
-            cout << left << "                     " << i.first << "                     " << i.second << endl;// <<<< "                     "<< DecToBin(i.second) <<"                     " << DecToHex(i.second) 
+            cout <<"                     " << i.first << "                     " << i.second << endl;// <<<< "                     "<< DecToBin(i.second) <<"                     " << DecToHex(i.second) 
     
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
     cout << "Program Counter:" << endl << PC << endl;
 }
 
-void program::setPC(unsigned int st)
-{
-	if (st < startingPC) { // or < startingPC - 4 not sure yet
-		errorr("Wrong address");
-		return;}	
-        else {	PC = st;}
+// Function to set the program counter
+void program::setPC(unsigned int st) {
+    // Checking if the new program counter value is within valid range
+    if (st < startingPC - 4) { 
+        errorr("Wrong address"); // Outputting error message
+        return; //
+    } else {
+        PC = st; // Setting program counter to the new value
+    }
 }
 
-unsigned int program::getPC()
-{
-	return PC;
+// Function to get the program counter
+unsigned int program::getPC() {
+    return PC; // program counter value
 }
 
-void program::DoR(string reg, int valuee)
-{
-    if (!checkregister(reg)) {
-        errorr("Wrong Register Name");
-        return;
+// Function to perform register operations
+void program::DoR(string registerr, int valuee) {
+    // Checking if the register format is valid
+    if (!checkregister(registerr)) {
+        errorr("Wrong Register format"); // Outputting error message
+        return; //
+    }
+    // Checking if the register is x0 (zero register)
+    if (registerr == "x0") {
+        errorr("Cannot change the value of Register ZERO"); // Outputting error message
+        return; //
     }
     int registernm;
-    if (reg[0] == 'X') {
-        stringstream ss(reg.substr(1, reg.length() - 1));
-        if (!(ss >> registernm)) {
-            errorr("Wrong Register Name");
-            return;
+    // getting register number
+    if (registerr[0] == 'x') {
+        registernm = stoi(registerr.substr(1));
+    } else {
+        auto it = RegisterHash.find(registerr);
+        if (it != RegisterHash.end()) {
+            registernm = stoi(it->second.substr(1));
         }
-    } else {
-        registernm = find(RegistersN.begin(), RegistersN.end(), reg) - RegistersN.begin();
     }
-
-    if (registernm >= 32 || registernm < 0) {
-        errorr("Wrong Register Name");
-        return;
-    }
-    if (registernm != 0) {
-        Reg[registernm] = valuee;
-    } else {
-        errorr("Cannot change the value of Register ZERO");
-    }
-
+    Reg[registernm] = valuee; // Setting register value
     return;
 }
-void program::errorr(string error)
-{
-	cout << error << endl;
-	exit(1);
+
+// Function to handle errors
+void program::errorr(string errorrrr) {
+    cout << errorrrr << endl; // Outputting error message
+    exit(1); // Exiting program with error status
 }
-int program::HaveR(string in) {
-    if (!checkregister(in)) {
-        errorr("Wrong Register Name");
-        return 0;
+
+// Function to get the value of a register
+int program::HaveR(const string stringg) {
+    // Checking if the register format is valid
+    if (!checkregister(stringg)) {
+        errorr("Wrong Register format"); // Outputting error message
+        return -1; // invalid value
     }
     int registernm;
-    if (in[0] == 'X') {
-        if (!checkinteger(in.substr(1))) {
-            errorr("Wrong Register Num");
-            return 0;
+    // getting register number
+    if (stringg[0] == 'x') {
+        registernm = stoi(stringg.substr(1));
+    } else { // searching the map
+        auto it = RegisterHash.find(stringg);
+        if (it != RegisterHash.end()) {
+            registernm = stoi(it->second.substr(1));
         }
-        registernm = stoi(in.substr(1));
-    } else {
-        auto it = find(RegistersN.begin(), RegistersN.end(), in);
-        if (it == RegistersN.end()) {
-            errorr("Wrong Register Name");
-            return 0;
-        }
-        registernm = distance(RegistersN.begin(), it);
     }
-
-    if (registernm >= 32 || registernm < 0) {
-        errorr("Wrong Register Num");
-        return 0;
-    }
-    return Reg[registernm];
+    return Reg[registernm]; // register value
 }
 
-bool program::checkinteger(string s) {
-    if (s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false;
-    char * p;
-    strtol(s.c_str(), &p, 10);
-    return (*p == 0);
-}
-bool program::checkregister(string s)
+// Function to check if a string represents a valid register
+bool program::checkregister(string str)
 {
-	if (s.empty()) {
-		return false;
-	} else if (find(RegistersN.begin(), RegistersN.end(), s) != RegistersN.end()) {
-		return true;
-	} else if (s[0] == 'X') {
-		if (checkinteger(s.substr(1, s.length() - 1))) {
-			int number = stoi((s.substr(1, s.length() - 1)));
-			if (number < 32 && number >= 0) {
-				return true;
-			}
-		}
-	}else {
-        return false;
+    // Check if the string is found as a key in RegisterHash
+    if (RegisterHash.find(str) != RegisterHash.end()) {
+        return true;
     }
-    return false; // to ignore the warning of non-void function return value
+    
+    // Check if the string is found as a value in RegisterHash
+    for (const auto& pair : RegisterHash) {
+        if (pair.second == str) {
+            return true;
+        }
     }
 
-void program:: dooo(vector<string> operationn) {
+    // String not found in keys or values
+    return false;
+}
+
+void program:: dooo(vector<string> operationn) { // cases for the functions 
     string oper = operationn.at(0);
-    if (oper == "ADD") {
+    if (oper == "add") {
         ADD(operationn);
-    } else if (oper == "ADDI") {
+    } else if (oper == "addi") {
         ADDI(operationn);
-    } else if (oper == "AND") {
+    } else if (oper == "and") {
         AND(operationn);
-    } else if (oper == "ANDI") {
+    } else if (oper == "andi") {
         ANDI(operationn);
-    } else if (oper == "AUIPC") {
+    } else if (oper == "auipc") {
         AUIPC(operationn);
-    } else if (oper == "BEQ") {
+    } else if (oper == "beq") {
         BEQ(operationn);
-    } else if (oper == "BGE") {
+    } else if (oper == "bge") {
         BGE(operationn);
-    } else if (oper == "BGEU") {
+    } else if (oper == "bgeu") {
         BGEU(operationn);
-    } else if (oper == "BLT") {
+    } else if (oper == "blt") {
         BLT(operationn);
-    } else if (oper == "BLTU") {
+    } else if (oper == "bltu") {
         BLTU(operationn);
-    } else if (oper == "BNE") {
+    } else if (oper == "bne") {
         BNE(operationn);
-    } else if (oper == "JAL") {
+    } else if (oper == "jal") {
         JAL(operationn);
-    } else if (oper == "JALR") {
+    } else if (oper == "jalr") {
         JALR(operationn);
-    } else if (oper == "LB") {
+    } else if (oper == "lb") {
         LB(operationn);
-    } else if (oper == "LBU") {
+    } else if (oper == "lbu") {
         LBU(operationn);
-    } else if (oper == "LH") {
+    } else if (oper == "lh") {
         LH(operationn);
-    } else if (oper == "LHU") {
+    } else if (oper == "lhu") {
         LHU(operationn);
-    } else if (oper == "LUI") {
+    } else if (oper == "lui") {
         LUI(operationn);
-    } else if (oper == "LW") {
+    } else if (oper == "lw") {
         LW(operationn);
-    } else if (oper == "OR") {
+    } else if (oper == "or") {
         OR(operationn);
-    } else if (oper == "ORI") {
+    } else if (oper == "ori") {
         ORI(operationn);
-    } else if (oper == "SB") {
+    } else if (oper == "sb") {
         SB(operationn);
-    } else if (oper == "SH") {
+    } else if (oper == "sh") {
         SH(operationn);
-    } else if (oper == "SLL") {
+    } else if (oper == "sll") {
         SLL(operationn);
-    } else if (oper == "SLLI") {
+    } else if (oper == "slli") {
         SLLI(operationn);
-    } else if (oper == "SLT") {
+    } else if (oper == "slt") {
         SLT(operationn);
-    } else if (oper == "SLTI") {
+    } else if (oper == "slti") {
         SLTI(operationn);
-    } else if (oper == "SLTIU") {
+    } else if (oper == "sltiu") {
         SLTIU(operationn);
-    } else if (oper == "SLTU") {
+    } else if (oper == "sltu") {
         SLTU(operationn);
-    } else if (oper == "SRA") {
+    } else if (oper == "sra") {
         SRA(operationn);
-    } else if (oper == "SRAI") {
+    } else if (oper == "srai") {
         SRAI(operationn);
-    } else if (oper == "SRL") {
+    } else if (oper == "srl") {
         SRL(operationn);
-    } else if (oper == "SRLI") {
+    } else if (oper == "srli") {
         SRLI(operationn);
-    } else if (oper == "SUB") {
+    } else if (oper == "sub") {
         SUB(operationn);
-    } else if (oper == "SW") {
+    } else if (oper == "sw") {
         SW(operationn);
-    } else if (oper == "XOR") {
+    } else if (oper == "xor") {
         XOR(operationn);
-    } else if (oper == "XORI") {
+    } else if (oper == "xori") {
         XORI(operationn);
     } else {
        errorr("Wrong Operation");
     }
 }
-
+// Function to check if a string represents a valid immediate value
+bool program::isValidImmediate(const string& immediateStr, int& immediate) {
+    try {
+        immediate = stoi(immediateStr); // Converting string to integer
+        return true; // Returning true if conversion succeeds
+    } catch (const invalid_argument&) {
+        return false; // Returning false if conversion fails due to invalid argument
+    } catch (const out_of_range&) {
+        return false; // Returning false if conversion fails due to out of range argument
+    }
+}
+// Function to perform Load Upper Immediate (LUI) operation
 void program::LUI(vector<string> operation) {
     int immediate;
+    // Checking if the immediate value is valid
     if (!isValidImmediate(operation.at(2), immediate)) {
         errorr("Wrong immediate");
         return;
     }
+    // Shifting immediate left by 12 bits and setting the register value
     DoR(operation.at(1), immediate << 12);
 }
 
+// Function to perform Add Upper Immediate to PC (AUIPC) operation
 void program::AUIPC(vector<string> operation) {
     int immediate;
+    // Checking if the immediate value is valid
     if (!isValidImmediate(operation.at(2), immediate)) {
         errorr("Wrong immediate");
         return;
     }
+    // Shifting immediate left by 12 bits, adding PC and setting the register value
     DoR(operation.at(1), (immediate << 12) + PC);
 }
 
+// Function to perform Jump and Link Register (JALR) operation
 void program::JALR(vector<string> operation) {
     int immediate;
+    // Checking if the immediate value is valid
     if (!isValidImmediate(operation.at(2), immediate)) {
         errorr("Wrong immediate");
         return;
     }
+    // Calculating new program counter value, setting register value, and updating program counter
     DoR(operation.at(1), immediate + HaveR(operation.at(3)) + 4);
     setPC(immediate + HaveR(operation.at(3)) - 4);
 }
 
+// Function to perform Jump and Link (JAL) operation
 void program::JAL(vector<string> operation) {
-	DoR(operation.at(1), getPC() + 4);
-	if (funcs.find(operation.at(2)) == funcs.end()) {
-		errorr("Function doesn't exist");
-	}
-	else {
-		setPC( (funcs.find(operation.at(2)) -> second)-4 );
-	}
+    // Setting register value to current program counter + 4
+    DoR(operation.at(1), getPC() + 4);
+    // Checking if label exists in function map and setting program counter accordingly
+    if (labels.find(operation.at(2)) == labels.end()) {
+        errorr("the label is not found");
+    } else {
+        setPC((labels.find(operation.at(2))->second) - 4);
+    }
 }
 
+// Function to perform Branch Equal (BEQ) operation
 void program::BEQ(vector<string> operation) {
-	if (funcs.find(operation.at(3)) == funcs.end()) {
-		errorr("Function doesn't exist");
-		return;
-	}
-	if (HaveR(operation.at(1)) == HaveR(operation.at(2)))
-	{
-		setPC((funcs.find(operation.at(3))->second) - 4);
-	}
+    // Checking if label exists in function map and setting program counter accordingly
+    if (labels.find(operation.at(3)) == labels.end()) {
+        errorr("the label is not found");
+        return;
+    }
+    if (HaveR(operation.at(1)) == HaveR(operation.at(2))) {
+        setPC((labels.find(operation.at(3))->second) - 4);
+    }
 }
 
+// Function to perform Branch Not Equal (BNE) operation
 void program::BNE(vector<string> operation) {
-	if (funcs.find(operation.at(3)) == funcs.end()) {
-		errorr("Function doesn't exist");
-		return;
-	}
-	if (HaveR(operation.at(1)) != HaveR(operation.at(2)))
-	{
-		setPC((funcs.find(operation.at(3))->second) - 4);
-	}
+    // Checking if label exists in function map and setting program counter accordingly
+    if (labels.find(operation.at(3)) == labels.end()) {
+        errorr("the label is not found");
+        return;
+    }
+    if (HaveR(operation.at(1)) != HaveR(operation.at(2))) {
+        setPC((labels.find(operation.at(3))->second) - 4);
+    }
 }
 
+// Function to perform Branch Less Than (BLT) operation
 void program::BLT(vector<string> operation) {
-	if (funcs.find(operation.at(3)) == funcs.end()) {
-		errorr("Function doesn't exist");
-		return;
-	}
-	if (HaveR(operation.at(1)) < HaveR(operation.at(2)))
-	{
-		setPC((funcs.find(operation.at(3))->second) - 4);
-	}
+    // Checking if label exists in function map and setting program counter accordingly
+    if (labels.find(operation.at(3)) == labels.end()) {
+        errorr("the label is not found");
+        return;
+    }
+    if (HaveR(operation.at(1)) < HaveR(operation.at(2))) {
+        setPC((labels.find(operation.at(3))->second) - 4);
+    }
 }
 
+// Function to perform Branch Greater Than or Equal (BGE) operation
 void program::BGE(vector<string> operation) {
-	if (funcs.find(operation.at(3)) == funcs.end()) {
-		errorr("Function doesn't exist");
-		return;
-	}
-	if (HaveR(operation.at(1)) >= HaveR(operation.at(2)))
-	{
-		setPC((funcs.find(operation.at(3))->second) - 4);
-	}
+    // Checking if label exists in function map and setting program counter accordingly
+    if (labels.find(operation.at(3)) == labels.end()) {
+        errorr("the label is not found");
+        return;
+    }
+    if (HaveR(operation.at(1)) >= HaveR(operation.at(2))) {
+        setPC((labels.find(operation.at(3))->second) - 4);
+    }
 }
 
+// Function to perform Set Less Than Immediate (SLTI) operation
 void program::SLTI(vector<string> operation) {
     int immediate;
+    // Checking if the immediate value is valid
     if (operation.size() < 4 || !isValidImmediate(operation.at(3), immediate)) {
         errorr("Wrong immediate");
         return;
     }
+    // Setting register value based on comparison with immediate
     if (HaveR(operation.at(2)) < immediate) {
         DoR(operation.at(1), 1);
     } else {
@@ -501,12 +530,15 @@ void program::SLTI(vector<string> operation) {
     }
 }
 
+// Function to perform Set Less Than Immediate Unsigned (SLTIU) operation
 void program::SLTIU(vector<string> operation) {
     int immediate;
+    // Checking if the immediate value is valid
     if (operation.size() < 4 || !isValidImmediate(operation.at(3), immediate)) {
         errorr("Wrong immediate");
         return;
     }
+    // Setting register value based on comparison with immediate (unsigned)
     if ((int)HaveR(operation.at(2)) < immediate) {
         DoR(operation.at(1), 1);
     } else {
@@ -514,166 +546,214 @@ void program::SLTIU(vector<string> operation) {
     }
 }
 
+// Function to perform Add Immediate (ADDI) operation
 void program::ADDI(vector<string> operation) {
     int immediate;
+    // Checking if the immediate value is valid
     if (operation.size() < 4 || !isValidImmediate(operation.at(3), immediate)) {
         errorr("Wrong immediate");
         return;
     }
+    // Adding immediate value to register value and setting the result
     DoR(operation.at(1), immediate + HaveR(operation.at(2)));
 }
 
+// Function to perform Bitwise OR Immediate (ORI) operation
 void program::ORI(vector<string> operation) {
     int immediate;
+    // Checking if the immediate value is valid
     if (operation.size() < 4 || !isValidImmediate(operation.at(3), immediate)) {
         errorr("Wrong immediate");
         return;
     }
+    // Performing bitwise OR operation with immediate value and setting the result
     DoR(operation.at(1), immediate | HaveR(operation.at(2)));
 }
 
+// Function to perform Bitwise XOR Immediate (XORI) operation
 void program::XORI(vector<string> operation) {
     int immediate;
+    // Checking if the immediate value is valid
     if (operation.size() < 4 || !isValidImmediate(operation.at(3), immediate)) {
         errorr("Wrong immediate");
         return;
     }
+    // Performing bitwise XOR operation with immediate value and setting the result
     DoR(operation.at(1), immediate ^ HaveR(operation.at(2)));
 }
 
+// Function to perform Bitwise AND Immediate (ANDI) operation
 void program::ANDI(vector<string> operation) {
     int immediate;
+    // Checking if the immediate value is valid
     if (operation.size() < 4 || !isValidImmediate(operation.at(3), immediate)) {
         errorr("Wrong immediate");
         return;
     }
+    // Performing bitwise AND operation with immediate value and setting the result
     DoR(operation.at(1), immediate & HaveR(operation.at(2)));
 }
 
+// Function to perform Shift Left Logical Immediate (SLLI) operation
 void program::SLLI(vector<string> operation) {
     int immediate;
+    // Checking if the immediate value is valid
     if (operation.size() < 4 || !isValidImmediate(operation.at(3), immediate)) {
         errorr("Wrong immediate");
         return;
     }
+    // Performing shift left logical operation with immediate value and setting the result
     DoR(operation.at(1), HaveR(operation.at(2)) << immediate);
 }
 
+// Function to perform Shift Right Logical Immediate (SRLI) operation
 void program::SRLI(vector<string> operation) {
     int immediate;
+    // Checking if the immediate value is valid
     if (operation.size() < 4 || !isValidImmediate(operation.at(3), immediate)) {
         errorr("Wrong immediate");
         return;
     }
+    // Performing shift right logical operation with immediate value and setting the result
     DoR(operation.at(1), (int)(HaveR(operation.at(2))) >> immediate);
 }
 
+// Function to perform Shift Right Arithmetic Immediate (SRAI) operation
 void program::SRAI(vector<string> operation) {
     int immediate;
+    // Checking if the immediate value is valid
     if (operation.size() < 4 || !isValidImmediate(operation.at(3), immediate)) {
         errorr("Wrong immediate");
         return;
     }
+    // Performing shift right arithmetic operation with immediate value and setting the result
     DoR(operation.at(1), HaveR(operation.at(2)) >> immediate);
 }
 
-bool program::isValidImmediate(const string& immediateStr, int& immediate) {
-    try {
-        immediate = stoi(immediateStr);
-        return true;
-    } catch (const invalid_argument&) {
-        return false;
-    } catch (const out_of_range&) {
-        return false;
+// Function to perform Addition (ADD) operation
+void program::ADD(vector<string> operation) {
+    // Adding values of two registers and setting the result to the destination register
+    DoR(operation.at(1), HaveR(operation.at(2)) + HaveR(operation.at(3)));
+}
+
+// Function to perform Subtraction (SUB) operation
+void program::SUB(vector<string> operation) {
+    // Subtracting values of two registers and setting the result to the destination register
+    DoR(operation.at(1), HaveR(operation.at(2)) - HaveR(operation.at(3)));
+}
+
+// Function to perform Shift Left Logical (SLL) operation
+void program::SLL(vector<string> operation) {
+    // Shifting value of a register left by value of another register and setting the result to the destination register
+    DoR(operation.at(1), HaveR(operation.at(2)) << HaveR(operation.at(3)));
+}
+
+// Function to perform Set Less Than (SLT) operation
+void program::SLT(vector<string> operation) {
+    // Comparing values of two registers and setting 1 to the destination register if first is less than second, otherwise setting 0
+    if (HaveR(operation.at(2)) < HaveR(operation.at(3))) {
+        DoR(operation.at(1), 1);
+    } else {
+        DoR(operation.at(1), 0);
     }
 }
-void program::ADD(vector<string> operation) {
-	DoR(operation.at(1), HaveR(operation.at(2)) + HaveR(operation.at(3)));
-}
 
-void program::SUB(vector<string> operation) {
-	DoR(operation.at(1), HaveR(operation.at(2)) - HaveR(operation.at(3)));
-}
-
-void program::SLL(vector<string> operation) {
-	DoR(operation.at(1), HaveR(operation.at(2)) << HaveR(operation.at(3)));
-}
-
-void program::SLT(vector<string> operation) {
-	if (HaveR(operation.at(2)) < HaveR(operation.at(3))) {
-		DoR(operation.at(1), 1);
-	}
-	else {
-		DoR(operation.at(1), 0);
-	}
-}
-
+// Function to perform Set Less Than Unsigned (SLTU) operation
 void program::SLTU(vector<string> operation) {
-	if ((int)HaveR(operation.at(2)) < (int)HaveR(operation.at(3))) {
-		DoR(operation.at(1), 1);
-	}
-	else {
-		DoR(operation.at(1), 0);
-	}
+    // Comparing values of two registers (unsigned) and setting 1 to the destination register if first is less than second, otherwise setting 0
+    if ((int)HaveR(operation.at(2)) < (int)HaveR(operation.at(3))) {
+        DoR(operation.at(1), 1);
+    } else {
+        DoR(operation.at(1), 0);
+    }
 }
+
+// Function to perform Multiplication (MUL) operation
 void program::MUL(vector<string> operation) {
-	int32_t finall = static_cast<int32_t>((int64_t(HaveR(operation.at(2)) * int64_t(HaveR(operation.at(3))))));
-	DoR(operation.at(1),finall);
+    // Multiplying values of two registers and setting the result to the destination register
+    int32_t finall = static_cast<int32_t>((int64_t(HaveR(operation.at(2)) * int64_t(HaveR(operation.at(3))))));
+    DoR(operation.at(1), finall);
 }
 
+// Function to perform Multiplication High (MULH) operation
 void program::MULH(vector<string> operation) {
-	int32_t finall = static_cast<int32_t>((int64_t(HaveR(operation.at(2)) * int64_t(HaveR(operation.at(3))))) >> 32);
-	DoR(operation.at(1), finall);
+    // Multiplying values of two registers and getting the high bits of the result, then setting it to the destination register
+    int32_t finall = static_cast<int32_t>((int64_t(HaveR(operation.at(2)) * int64_t(HaveR(operation.at(3))))) >> 32);
+    DoR(operation.at(1), finall);
 }
 
+// Function to perform Multiplication High Unsigned (MULHU) operation
 void program::MULHU(vector<string> operation) {
-	uint32_t finall = static_cast<uint32_t>((uint64_t(HaveR(operation.at(2)) * uint64_t(HaveR(operation.at(3))))) >> 32);
-	DoR(operation.at(1), finall);
+    // Multiplying values of two registers (unsigned) and getting the high bits of the result, then setting it to the destination register
+    uint32_t finall = static_cast<uint32_t>((uint64_t(HaveR(operation.at(2)) * uint64_t(HaveR(operation.at(3))))) >> 32);
+    DoR(operation.at(1), finall);
 }
 
+// Function to perform Multiplication High Signed/Unsigned (MULHSU) operation
 void program::MULHSU(vector<string> operation) {
-	int32_t finall = static_cast<int32_t>((int64_t(HaveR(operation.at(2)) * uint64_t(HaveR(operation.at(3))))) >> 32);
-	DoR(operation.at(1), finall);
+    // Multiplying values of two registers and getting the high bits of the result (with signed/unsigned interpretation), then setting it to the destination register
+    int32_t finall = static_cast<int32_t>((int64_t(HaveR(operation.at(2)) * uint64_t(HaveR(operation.at(3))))) >> 32);
+    DoR(operation.at(1), finall);
 }
 
+// Function to perform Division (DIV) operation
 void program::DIV(vector<string> operation) {
-	int finall = HaveR(operation.at(2)) / HaveR(operation.at(3));
-	DoR(operation.at(1), finall);
+    // Dividing values of two registers and setting the quotient to the destination register
+    int finall = HaveR(operation.at(2)) / HaveR(operation.at(3));
+    DoR(operation.at(1), finall);
 }
 
+// Function to perform Division Unsigned (DIVU) operation
 void program::DIVU(vector<string> operation) {
-	int finall = (int)HaveR(operation.at(2)) / (int)HaveR(operation.at(3));
-	DoR(operation.at(1), finall);
+    // Dividing values of two registers (unsigned) and setting the quotient to the destination register
+    int finall = (int)HaveR(operation.at(2)) / (int)HaveR(operation.at(3));
+    DoR(operation.at(1), finall);
 }
 
+// Function to perform Remainder (REM) operation
 void program::REM(vector<string> operation) {
-	int finall = HaveR(operation.at(2)) % HaveR(operation.at(3));
-	DoR(operation.at(1), finall);
+    // Computing remainder of division of values of two registers and setting it to the destination register
+    int finall = HaveR(operation.at(2)) % HaveR(operation.at(3));
+    DoR(operation.at(1), finall);
 }
 
+// Function to perform Remainder Unsigned (REMU) operation
 void program::REMU(vector<string> operation) {
-	int finall = (int)HaveR(operation.at(2)) % (int)HaveR(operation.at(3));
-	DoR(operation.at(1), finall);
+    // Computing remainder of division of values of two registers (unsigned) and setting it to the destination register
+    int finall = (int)HaveR(operation.at(2)) % (int)HaveR(operation.at(3));
+    DoR(operation.at(1), finall);
 }
+
+// Function to perform Bitwise XOR  operation
 void program::XOR(vector<string> operation) {
-	DoR(operation.at(1), HaveR(operation.at(2)) ^ HaveR(operation.at(3)));
+    // Performing bitwise XOR operation on values of two registers and setting the result to the destination register
+    DoR(operation.at(1), HaveR(operation.at(2)) ^ HaveR(operation.at(3)));
 }
 
+// Function to perform Shift Right Logical (SRL) operation
 void program::SRL(vector<string> operation) {
-	DoR(operation.at(1), (int)HaveR(operation.at(2)) >> HaveR(operation.at(3)));
+    // Performing shift right logical operation on value of a register by value of another register and setting the result to the destination register
+    DoR(operation.at(1), (int)HaveR(operation.at(2)) >> HaveR(operation.at(3)));
 }
 
+// Function to perform Shift Right Arithmetic (SRA) operation
 void program::SRA(vector<string> operation) {
-	DoR(operation.at(1), HaveR(operation.at(2)) >> HaveR(operation.at(3)));
+    // Performing shift right arithmetic operation on value of a register by value of another register and setting the result to the destination register
+    DoR(operation.at(1), HaveR(operation.at(2)) >> HaveR(operation.at(3)));
 }
 
+// Function to perform Bitwise OR operation
 void program::OR(vector<string> operation) {
-	DoR(operation.at(1), HaveR(operation.at(2)) | HaveR(operation.at(3)));
+    // Performing bitwise OR operation on values of two registers and setting the result to the destination register
+    DoR(operation.at(1), HaveR(operation.at(2)) | HaveR(operation.at(3)));
 }
 
+// Function to perform Bitwise AND operation
 void program::AND(vector<string> operation) {
-	DoR(operation.at(1), HaveR(operation.at(2)) & HaveR(operation.at(3)));
+    // Performing bitwise AND operation on values of two registers and setting the result to the destination register
+    DoR(operation.at(1), HaveR(operation.at(2)) & HaveR(operation.at(3)));
 }
+
 
 void program::BGEU(vector<string> operation) {}
 
@@ -687,7 +767,24 @@ void program::LH(vector<string> operation) {}
 
 void program::LHU(vector<string> operation) {}
 
-void program::LW(vector<string> operation) {}
+void program::LW(vector<string> operation) {
+        int offset, base;
+        if (operation.size() < 4 || !isValidImmediate(operation[2], offset)) {
+            cout << "Wrong immediate" << endl;
+            return;
+        }
+        base = HaveR(operation[1]);
+        int address = base + offset;
+        if (address < 0 || address + 3 >= Memory.size()) {
+            cout << "Memory access out of bounds" << endl;
+            return;
+        }
+        int value = Memory[address];
+        value |= Memory[address + 1] << 8;
+        value |= Memory[address + 2] << 16;
+        value |= Memory[address + 3] << 24;
+        DoR(operation[3], value);
+}
 
 void program::SB(vector<string> operation) {}
 
@@ -698,8 +795,13 @@ int main() {
 	string alloperations = "instructions.txt";
 	string data = "Data.txt";
     int sPC;
-    cout << "Enter the starting address: ";
+    cout << "Enter the starting PC: "<< endl;
     cin >> sPC;
-	program run(alloperations, data, sPC);
+    while (sPC<0){
+    cout << "Don't make the starting PC a negative number"<< endl;
+    cout << "Enter the starting PC: "<< endl;
+    cin >> sPC;
+    }
+    program run(alloperations, data, sPC);
 	return 0;
 }
