@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <iomanip>
+#include <iostream>
 #include <bits/stdc++.h>
 using namespace std;
 class program
@@ -22,13 +23,15 @@ map<string, string> RegisterHash = {
 };
 	vector<string> RegistersN = { "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6" };
 	void getoperation();
+    string decimalToBinary(int Decimal);
+    string decimalToHexa(int n); 
 	void dooperation();
-	void dooo(vector<string> instruction);
+	void dooo(vector<string> );
     bool populate();
 	int HaveR(string);
 	void errorr(string); 
-	// string DecToHex(int outt);
-	// string DecToBin(int outt);
+	// string decimalToHexa(int outt);
+	// string decimalToBinary(int outt);
 	unsigned int PC;
 	unsigned int startingPC;
 	map<unsigned int, int> Memory;
@@ -124,9 +127,8 @@ bool program::populate() {
             transform(j.begin(), j.end(), j.begin(), ::tolower); // Converting to lowercase
             labels.insert(pair<string, unsigned int>(j, getPC() + (alloperations.size()*4))); // Inserting label into map
         } else { // If operation doesn't contain a label
+            replace_if(j.begin(), j.end(), [](char c) { return c == '(' || c == ')' || c == ',' || c == ';'; }, ' ');
             transform(j.begin(), j.end(), j.begin(), ::tolower); // Converting to lowercase
-            replace(j.begin(), j.end(), ',', ' '); // Replacing commas with spaces
-            replace(j.begin(), j.end(), ';', ' '); // Replacing semicolons with spaces
             istringstream inst(j); // Creating string stream
             string token; // Token variable
             vector<string> operation; // Vector to store operation tokens
@@ -173,24 +175,24 @@ void program::getoperation() {
         return; // 
     }
 
-    // Reading each line from data file and inserting memory location and data value into Memory map
+    // Reading each line from data file and inserting Memory location and data value into Memory map
     while (getline(input_file, data_line)) {
         if (data_line.empty()) { // Skipping empty lines
             continue;
         }
         int separator = data_line.find(','); // Finding separator (',')
-        unsigned int memory_location; // Variable to store memory location
+        unsigned int Memory_location; // Variable to store Memory location
         int data_value; // Variable to store data value
 
-        // getting memory location and data value from line
-        memory_location = stoi(data_line.substr(0, separator));
-        if (memory_location % 4 != 0) {
-            errorr("memory should be divisble by 4");
+        // getting Memory location and data value from line
+        Memory_location = stoi(data_line.substr(0, separator));
+        if (Memory_location % 4 != 0) {
+            errorr("Memory should be divisble by 4");
         }
         data_value = stoi(data_line.substr(separator + 1, data_line.length()));
 
-        // Inserting memory location and data value into Memory map
-        Memory.insert(pair<unsigned int, int>(memory_location, data_value));
+        // Inserting Memory location and data value into Memory map
+        Memory.insert(pair<unsigned int, int>(Memory_location, data_value));
     }
     input_file.close(); // Closing data file
 
@@ -223,29 +225,30 @@ void program::run()
 {
     cout << "Register Values:" << endl;
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
-    cout << "                     "<< "Register Name" << "                     "<< "Register Number" << "                     "<< "Binary Value" << "                     "<< "Decimal Value" << "                     "<< "Hexadecimal Value" << endl;
+    cout << "| Register Name       | Register Number | Decimal Value | Binary Value      | Hexadecimal Value |" << endl;
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
     for (int i = 0; i < 32; i++)
     {
-        cout << "                     " << RegistersN[i]<< "                     " <<   "x" + to_string(i) << "                     " << Reg[i] << endl;// << "                     " << DecToBin(Reg[i])  << "                     "<< DecToHex(Reg[i])
+        cout << "| " << setw(20) << left << RegistersN[i] << " | " << setw(15) << left << ("x" + to_string(i)) << " | " << setw(13) << left << Reg[i] << " | " << setw(17) << left << decimalToBinary(Reg[i]) << " | " << setw(16) << left << decimalToHexa(Reg[i]) << " |" << endl;
     }
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
 
-        cout << "Memory Values:" << endl;
-        cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
-        cout <<"                     " << "Memory Address" << "                     " << "Binary Value" << "                     "<< "Decimal Value" <<"                     " << "Hexadecimal Value" << endl;
-        cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
-        for (auto i : Memory)
-            cout <<"                     " << i.first << "                     " << i.second << endl;// <<<< "                     "<< DecToBin(i.second) <<"                     " << DecToHex(i.second) 
-    
+    cout << "Memory Values:" << endl;
+    cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+    cout << "| Memory Address      | Decimal Value | Binary Value      | Hexadecimal Value |" << endl;
+    cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+    for (auto i : Memory)
+        cout << "| " << setw(20) << left << i.first << " | " << setw(13) << left << i.second << " | " << setw(17) << left << decimalToBinary(i.second) << " | " << setw(16) << left << decimalToHexa(i.second) << " |" << endl;
+
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
     cout << "Program Counter:" << endl << PC << endl;
 }
 
+
 // Function to set the program counter
 void program::setPC(unsigned int st) {
     // Checking if the new program counter value is within valid range
-    if (st < startingPC -4) { 
+    if (st < startingPC) { 
         errorr("Wrong address"); // Outputting error message
         return; //
     } else {
@@ -633,13 +636,13 @@ void program::SRAI(vector<string> operation) {
     DoR(operation.at(1), HaveR(operation.at(2)) >> immediate);
 }
 
-// Function to perform Addition (ADD) operation
+// Function to perform Addition operation
 void program::ADD(vector<string> operation) {
     // Adding values of two registers and setting the result to the destination register
     DoR(operation.at(1), HaveR(operation.at(2)) + HaveR(operation.at(3)));
 }
 
-// Function to perform Subtraction (SUB) operation
+// Function to perform Subtraction operation
 void program::SUB(vector<string> operation) {
     // Subtracting values of two registers and setting the result to the destination register
     DoR(operation.at(1), HaveR(operation.at(2)) - HaveR(operation.at(3)));
@@ -778,38 +781,207 @@ void program::BLTU(vector<string> operation) {
         }
 }
 
-void program::LB(vector<string> operation) {}
+void program::LB(vector<string> operation) {
+    int immediate;
+    immediate = stoi(operation.at(2));
+    if (!isValidImmediate(operation.at(2), immediate)) {
+        errorr("Wrong immediate");
+        return;
+    }
+    int baseValue = HaveR(operation.at(3));
+    if (baseValue == -1) return; // Error handling in HaveR
 
-void program::LBU(vector<string> operation) {}
-
-void program::LH(vector<string> operation) {}
-
-void program::LHU(vector<string> operation) {}
-
-void program::LW(vector<string> operation) {
-        int offset, base;
-        if (operation.size() < 4 || !isValidImmediate(operation[2], offset)) {
-            cout << "Wrong immediate" << endl;
-            return;
-        }
-        base = HaveR(operation[1]);
-        int address = base + offset;
-        if (address < 0 || address + 3 >= Memory.size()) {
-            cout << "Memory access out of bounds" << endl;
-            return;
-        }
-        int value = Memory[address];
-        value |= Memory[address + 1] << 8;
-        value |= Memory[address + 2] << 16;
-        value |= Memory[address + 3] << 24;
-        DoR(operation[3], value);
+    int address = baseValue + immediate;
+    char value = static_cast<char>(Memory[address]); // Assuming Memory is a byte-addressable array
+    DoR(operation.at(1), static_cast<int>(value)); // Sign-extend the loaded byte
 }
 
-void program::SB(vector<string> operation) {}
+void program::LH(vector<string> operation) {
+    int offset;
+    offset = stoi(operation.at(2));
+    unsigned int totaloffset = offset + HaveR(operation.at(3));
 
-void program::SH(vector<string> operation) {}
+    // Check if the address is aligned on a 4-byte boundary
+    if (totaloffset % 4 == 3) {
+        unsigned int firstpart = 0;
+        unsigned int secpart = 0;
 
-void program::SW(vector<string> operation) {}
+        // Retrieve the upper 16 bits from the lower Byte
+        if (Memory.find(totaloffset - (totaloffset % 4)) == Memory.end()) {
+            firstpart = 0;
+        } else {
+            int Byte = Memory.find(totaloffset - (totaloffset % 4))->second;
+            firstpart = (Byte >> 24) & 0xFF;
+        }
+
+        // Retrieve the lower 16 bits from the higher Byte
+        if (Memory.find(totaloffset + 1) == Memory.end()) {
+            secpart = 0;
+        } else {
+            int Byte = Memory.find(totaloffset + 1)->second;
+            secpart = (Byte >> 0) & 0xFF;
+        }
+
+        unsigned int number = firstpart + (secpart << 8);
+
+        // Check if the number is negative (signed)
+        if (number >> 15 == 1) {
+            number += 0xFFFF0000;
+        }
+
+        DoR(operation.at(1), number);
+    } else {
+        if (Memory.find(totaloffset - (totaloffset % 4)) == Memory.end()) {
+            DoR(operation.at(1), 0);
+        } else {
+            int Byte = Memory.find(totaloffset - (totaloffset % 4))->second;
+            unsigned int firstpart = (Byte >> 8 * (totaloffset % 4)) & 0xFF;
+            unsigned int secpart = (Byte >> (8 * ((totaloffset % 4) + 1))) & 0xFF;
+            unsigned int number = firstpart + (secpart << 8);
+
+            // Check if the number is negative (signed)
+            if (number >> 15 == 1) {
+                number += 0xFFFF0000;
+            }
+
+            DoR(operation.at(1), number);
+        }
+    }
+}
+
+
+void program::LHU(vector<string> operation) {
+    int offset;
+    offset = stoi(operation.at(2));
+
+    unsigned int add = offset + HaveR(operation.at(3));
+
+    // Check if the address is aligned on a 4-byte boundary
+    if (add % 4 == 3) {
+        unsigned int firstpart = 0;
+        unsigned int secpart = 0;
+
+        // Retrieve the upper 16 bits from the lower byte
+        if (Memory.find(add - (add % 4)) == Memory.end()) {
+            firstpart = 0;
+        } else {
+            int pyte = Memory.find(add - (add % 4))->second;
+            firstpart = (pyte >> 24) & 0xFF;
+        }
+
+        // Retrieve the lower 16 bits from the higher pyte
+        if (Memory.find(add + 1) == Memory.end()) {
+            secpart = 0;
+        } else {
+            int pyte = Memory.find(add + 1)->second;
+            secpart = (pyte >> 0) & 0xFF;
+        }
+
+        unsigned int number = firstpart + (secpart << 8);
+
+        DoR(operation.at(1), number);
+    } else {
+        // Error: Address is not aligned on a 4-byte boundary
+        errorr("Innumberid LHU operation: Address is not aligned on a 4-byte boundary");
+    }
+}
+
+void program::LW(vector<string> operation) {
+    int offset;
+    offset = stoi(operation.at(2));
+    int address = HaveR(operation.at(3)) + offset;
+    if (!isValidImmediate(operation.at(2), offset)||(offset % 4 != 0)) {
+            errorr("Wrong offset"); 
+            return;}
+    if (Memory.find(address) == Memory.end()) {
+            DoR(operation.at(1), 0);
+        } else {
+            int number = Memory.find(address)->second;
+            DoR(operation.at(1), number);
+        }
+}
+
+void program::SB(vector<string> operation) {
+    int offset;
+    if (operation.size() < 3 || !isValidImmediate(operation.at(2), offset)) {
+        errorr("Wrong immediate");
+        return;
+    }
+    int address = HaveR(operation.at(3)) + offset;
+
+    int value = HaveR(operation.at(1));
+    Memory[address] = value & 0xFF;
+}
+void program::SH(vector<string> operation) {
+    int offset;
+    if (operation.size() < 3 || !isValidImmediate(operation.at(2), offset) || offset % 2 != 0) {
+        errorr("Wrong immediate");
+        return;
+    }
+    int address = HaveR(operation.at(3)) + offset;
+
+    int value = HaveR(operation.at(1));
+    Memory[address] = (value >> 8) & 0xFF;
+    Memory[address + 1] = value & 0xFF;
+}
+void program::LBU(vector<string> operation) {
+
+		int offset = stoi(operation.at(2));
+		unsigned int totaloffset = offset + HaveR(operation.at(3));
+         if (!isValidImmediate(operation.at(2), offset)) {
+            errorr("Wrong offset");
+        }
+		if (Memory.find(totaloffset - (totaloffset % 4)) == Memory.end()) {
+			DoR(operation.at(1), 0);
+		}
+		else {
+			int smth = Memory.find(totaloffset - (totaloffset % 4))->second;
+			unsigned int pyte = (smth >> (8 * (totaloffset % 4))) & 0xFF;
+			DoR(operation.at(1), pyte);
+		}
+	}
+	
+void program:: SW(vector<string> operation) {
+        int offset = stoi(operation.at(2));
+        if (operation.size() < 3 || !isValidImmediate(operation.at(2), offset) ||offset%4 != 0 ) {
+            errorr("Wrong immediate");
+            return;
+        }
+        int address = HaveR(operation.at(3)) + offset;
+
+        int value = HaveR(operation.at(1));
+        Memory[address] = value & 0xFF;
+    }
+string program::decimalToHexa(int number) 
+{
+    string hexadecimal = "";
+    if (number == 0) return "0";
+    const char hexChars[] = "0123456789ABCDEF";
+
+    while (number > 0) {
+        hexadecimal = hexChars[number % 16] + hexadecimal;
+        number /= 16;
+    }
+    hexadecimal = string(8 - hexadecimal.length(), '0') + hexadecimal;
+
+    return hexadecimal;
+}
+
+string program::decimalToBinary(int number)
+{
+    string binary = "";
+    if (number == 0) return "0";
+
+    while (number > 0) {
+        binary = to_string(number % 2) + binary;
+        number /= 2;
+    }
+    binary = string(32 - binary.length(), '0') + binary;
+
+    return binary;
+}
+
+
 int main() {
 	string alloperations = "instructions.txt";
 	string data = "Data.txt";
