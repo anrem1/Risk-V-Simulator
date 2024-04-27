@@ -91,7 +91,7 @@ private:
     void XOR(vector<string> );
     void XORI(vector<string> );
 };
-program::program(string filee, string dataa, unsigned int startingPC)
+program::program(string filee, string dataa, unsigned int sPC)
 {
 	file = filee;
 	data = dataa;
@@ -101,7 +101,8 @@ program::program(string filee, string dataa, unsigned int startingPC)
     	for (int i = 0; i < 32; i++) {
 		Reg[i] = 0;
 	}
-    PC = startingPC;
+    PC = sPC;
+    startingPC = sPC; 
    	getoperation();
 }
 bool program::populate() {
@@ -114,7 +115,7 @@ bool program::populate() {
         errorr("Make PC positive number");
         return false;
     }
-    for (int i = 1; i < length; i++) {
+    for (int i = 0; i < length; i++) {
         string j = rawoperations.at(i);
         if (j.find(':') != string::npos) {
             j.erase(remove_if(j.begin(), j.end(), static_cast<int(*)(int)>(isspace)), j.end());
@@ -136,6 +137,7 @@ bool program::populate() {
                 continue;
             }
             alloperations.push_back(operation);
+         
         }
     }
     return true;
@@ -187,15 +189,17 @@ void program::getoperation()
 
 void program::dooperation()
 {
-	int operationsize = alloperations.size();
+	int operationsize = alloperations.size();	
 	int INDEX = (PC - startingPC) / 4;
+    run();
+
 	while(INDEX < operationsize) {
 		vector<string> operation = alloperations.at(INDEX);
 		if (operation.at(0) ==  "EBREAK" || operation.at(0) == "ECALL"|| operation.at(0) == "FENCE"){break;}
 		dooo(operation);
-        run();
 		PC = PC + 4;
 		INDEX = (PC - startingPC) / 4;
+        run();
 	}
 }
 void program::run()
@@ -693,9 +697,9 @@ void program::SW(vector<string> operation) {}
 int main() {
 	string alloperations = "instructions.txt";
 	string data = "Data.txt";
-    int startingPC;
+    int sPC;
     cout << "Enter the starting address: ";
-    cin >> startingPC;
-	program run(alloperations, data, startingPC);
+    cin >> sPC;
+	program run(alloperations, data, sPC);
 	return 0;
 }
