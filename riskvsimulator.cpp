@@ -184,6 +184,9 @@ void program::getoperation() {
 
         // getting memory location and data value from line
         memory_location = stoi(data_line.substr(0, separator));
+        if (memory_location % 4 != 0) {
+            errorr("memory should be divisble by 4");
+        }
         data_value = stoi(data_line.substr(separator + 1, data_line.length()));
 
         // Inserting memory location and data value into Memory map
@@ -210,9 +213,9 @@ void program::dooperation() {
         }
 
         dooo(operation); // Executing current operation
+        run(); // Running program
         PC = PC + 4; // Incrementing program counter by 4
         INDEX = (PC - startingPC) / 4; // Updating index based on new program counter
-        run(); // Running program
     }
 }
 
@@ -242,7 +245,7 @@ void program::run()
 // Function to set the program counter
 void program::setPC(unsigned int st) {
     // Checking if the new program counter value is within valid range
-    if (st < startingPC - 4) { 
+    if (st < startingPC -4) { 
         errorr("Wrong address"); // Outputting error message
         return; //
     } else {
@@ -755,9 +758,25 @@ void program::AND(vector<string> operation) {
 }
 
 
-void program::BGEU(vector<string> operation) {}
+void program::BGEU(vector<string> operation) {
+    if (labels.find(operation.at(3)) == labels.end()) {
+        errorr("Function doesn't exist");
+        return;
+    }
+    if ((unsigned int)HaveR(operation.at(1)) >= (unsigned int)HaveR(operation.at(2))) {
+        setPC((labels.find(operation.at(3))->second) - 4);
+    }
+}
 
-void program::BLTU(vector<string> operation) {}
+void program::BLTU(vector<string> operation) {
+    if (labels.find(operation.at(3)) == labels.end()) {
+        errorr("Function doesn't exist");
+        return;
+    }
+    if ((unsigned int)HaveR(operation.at(1)) < (unsigned int)HaveR(operation.at(2))) {
+        setPC((labels.find(operation.at(3))->second) - 4);
+        }
+}
 
 void program::LB(vector<string> operation) {}
 
@@ -797,8 +816,9 @@ int main() {
     int sPC;
     cout << "Enter the starting PC: "<< endl;
     cin >> sPC;
-    while (sPC<0){
-    cout << "Don't make the starting PC a negative number"<< endl;
+    while (sPC<0||sPC%4!=0){
+    if (sPC<0) cout << "Don't make the starting address a negative number"<< endl;
+    if (sPC%4!=0)cout << "Starting address should be divisible by 4"<< endl;
     cout << "Enter the starting PC: "<< endl;
     cin >> sPC;
     }
