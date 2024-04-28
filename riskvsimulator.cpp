@@ -470,13 +470,13 @@ void program::AUIPC(vector<string> operation) {
 void program::JALR(vector<string> operation) {
     int immediate;
     // Checking if the immediate value is valid
-    if (!isValidImmediate(operation.at(2), immediate)) {
+    if (!isValidImmediate(operation.at(3), immediate)) {
         errorr("Wrong immediate");
         return;
     }
     // Calculating new program counter value, setting register value, and updating program counter
-    DoR(operation.at(1), immediate + HaveR(operation.at(3)) + 4);
-    setPC(immediate + HaveR(operation.at(3)) - 4);
+    DoR(operation.at(1), immediate + HaveR(operation.at(2)) + 4);
+    setPC(immediate + HaveR(operation.at(2)) - 4);
 }
 
 // Function to perform Jump and Link (JAL) operation
@@ -971,57 +971,66 @@ void program:: SW(vector<string> operation) {
         int value = HaveR(operation.at(1));
         Memory[address] = value & 0xFF;
     }
-string program::decimalToHexa(int number) 
-{
-    string hexadecimal = "";
-    if (number == 0) return "0";
-    const char hexChars[] = "0123456789ABCDEF";
+string program::decimalToHexa(int num) {
+string binary = decimalToBinary(num);
+    string hex = "";
+    int value = 0;
+    if (num == 0) return "0";
 
-    while (number > 0) {
-        hexadecimal = hexChars[number % 16] + hexadecimal;
-        number /= 16;
+
+    for (int i = 0; i < 32; i += 4) {
+        value = 8 * (binary[i] - '0') + 4 * (binary[i+1] - '0') + 
+                2 * (binary[i+2] - '0') + (binary[i+3] - '0');
+        if (value < 10) 
+            hex += char('0' + value);
+        else 
+            hex += char('A' + (value - 10));
     }
-    hexadecimal = string(8 - hexadecimal.length(), '0') + hexadecimal;
-
-    return hexadecimal;
+ return hex;
 }
+string program::decimalToBinary(int num){
+    if (num == 0) return "0";
+    if (num == INT_MIN) return "10000000000000000000000000000000";
 
-string program::decimalToBinary(int number)
-{
+    bool isNegative = num < 0;
+    unsigned int posNum = isNegative ? -num : num;
+    
     string binary = "";
-    if (number == 0) return "0";
-
-    while (number > 0) {
-        binary = to_string(number % 2) + binary;
-        number /= 2;
+    while (posNum > 0) {
+        binary = to_string(posNum % 2) + binary;
+        posNum /= 2;
     }
-    binary = string(32 - binary.length(), '0') + binary;
-
+        binary = string(32 - binary.length(), '0') + binary;
+    
+    if (isNegative) {
+        for (char& c : binary) c = (c == '0' ? '1' : '0');
+                bool carry = true;
+        for (int i = binary.length() - 1; i >= 0 && carry; i--) {
+            if (binary[i] == '1') {
+                binary[i] = '0';
+            } else {
+                binary[i] = '1';
+                carry = false;
+            }
+        }
+    }
     return binary;
 }
 
-int main(int argc, char *argv[]) {
-    if (argc != 4) {
-        cout << "Usage: " << argv[0] << " <instruction_file> <data_file> <starting_PC>" << endl;
-        return 1; 
+    
+
+int main() {
+	string alloperations = "instructions.txt";
+	string data = "Data.txt";
+    int sPC;
+    cout << "Enter the starting PC: "<< endl;
+    cin >> sPC;
+    while (sPC<0||sPC%4!=0){
+    if (sPC<0) cout << "Don't make the starting address a negative number"<< endl;
+    if (sPC%4!=0)cout << "Starting address should be divisible by 4"<< endl;
+    cout << "Enter the starting PC: "<< endl;
+    cin >> sPC;
     }
-
-    string alloperations = argv[1];
-    string data = argv[2];
-    int sPC = stoi(argv[3]); 
-
-    // Validate sPC
-    while (sPC < 0 || sPC % 4 != 0) {
-        if (sPC < 0)
-            cout << "Don't make the starting address a negative number" << endl;
-        if (sPC % 4 != 0)
-            cout << "Starting address should be divisible by 4" << endl;
-        cout << "Enter the starting PC: ";
-        cin >> sPC;
-    }
-
-
     program run(alloperations, data, sPC);
-
-    return 0;
+	return 0;
 }
