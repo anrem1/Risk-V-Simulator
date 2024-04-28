@@ -1,7 +1,0 @@
-April 14, 2024, 10:30 AM: Today, added MUL function, along with the overall design for our program. April 16, 2024, 2:45 PM: I worked on MULH, MULHU, and MULHSU instructions today.(namely, multiplication and unsigned multiplication). 
-April 18, 2024, 1:10 PM: today was on implementing our DIV and DIVU instructions. 
-April 20, 2024, 9:00 AM: finalized our core program, including the program counter and memory management with a map. 
-April 22, 2024, 11:30 AM: Added REM and REMU instructions, which are very important for calculations involving modulus. 
-April 24, 2024, 3:50 PM: JAL and JALR instructions got implemented today. These are crucial for making loops and branches, so it was important to ensure they integrate seamlessly with the program counter.
-April 26, 2024, 4:15 PM: I reviewed all instructions we have done so far. It is very important that they work together along with the whole program and the program counter. 
-April 27, 2024, 5:30 PM: I spent today improving our program and making sure our output displays are easy to read and informative.
