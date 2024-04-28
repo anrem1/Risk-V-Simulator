@@ -1,0 +1,26 @@
+April 14, 2024, 3:30 PM:
+Wrapped up the coding for the BLTU and BGEU instructions. These will help with efficient branching in loops.
+
+
+April 18, 2024, 2:20 PM:
+Ran into a problem with the SW instruction while implementing it, the program counter wasn't updating right when we stored data during conditional branching. Managed to fix it though, so it's all running smoothly now.
+
+
+April 19, 2024, 4:45 PM:
+Got the LW instruction implemented and did a bunch of tests to make sure it's pulling the full 32-bit words from memory correctly, also from non-aligned addresses.
+
+
+April 21, 2024, 1:55 PM:
+Implemented the LBU instruction. Also, set up the SB instruction to make sure we're storing bytes correctly
+
+
+April 24, 2024, 8:45 PM:
+Integrated SH instruction.
+
+
+April 25, 2024, 11:00 AM:
+Improved the visual output and did the implementation for the LB and LH instructions. Also finished off with LHU, testing it with various alignments to double-check its zero-extension is on point. Moreover, done the conversion bonus functions to decimal and hexadecimal.
+
+April 27, 2024, 11:00 PM:
+We had our final review on the LH instruction today and the whole program. Talked through some potential tweaks and improvements with the team, which could help with memory efficiency.
+Also took a last look over the entire program’s display output and ran through everyone's code to ensure it's all integrated perfectly.

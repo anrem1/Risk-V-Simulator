@@ -1,0 +1,11 @@
+April 21, 10:53 pm: initialized registers, memory map, added while loop for all instructions
+April 21, 11:59 pm: added function that stores rd, rs1, and rs2
+April 22, 12:22 am: added implementation for add, sub, sll, slli, slt, sltu, xor, addi, slti, sltiu, xori, ori, andi
+April 27, 2:02 am: fixed error where dooo(operation) was called before initializing regs and pc
+April 27, 4:00 am: fixed error where it would skip reading the first line (made i=0 instead of i=1 in populate function)
+April 27, 5:00 am: fixed error where program would stop early because startingPC was not correctly set to user input 
+April 27, 5:00 pm: wrote description for project report
+April 27, 8:00 pm: fixed error where blt didn't work bc condition in setPC was faulty
+April 27, 8:35 pm: tested multiple loop inputs
+April 27, 9:00 pm: tested add, addi, and, andi, auipc, beq, bge, bgeu, blt, bltu, bne, jal, etc.
+April 27, 11:00 pm: tested all instructions

@@ -1,0 +1,23 @@
+April 14, 2024, 10:30 AM:
+Initiated the implementation of the MUL (Multiply) instruction today. This involved rigorous testing to ensure accuracy within the framework of our comprehensive program system, which manages the program counter and fundamental functions. Integration proceeded smoothly, reinforcing the robustness of our execution model.
+
+April 16, 2024, 2:45 PM:
+Today was focused on the complex multiplication instructions: MULH, MULHU, and MULHSU. These instructions are critical for executing high-order multiplications that our software relies on for advanced calculations. The integration of these instructions enhances the capabilities of our processing unit, ensuring that it meets the computational demands of our application.
+
+April 18, 2024, 1:10 PM:
+Dedicated the day to the implementation of the DIV and DIVU (Divide and Divide Unsigned) instructions. Special attention was given to accurately handling divisions across a range of scenarios, including both positive and negative divisors. Proper testing and validation were conducted to confirm the stability and correctness of the program counter updates, critical for the seamless operation of our system.
+
+April 20, 2024, 9:00 AM:
+Today marked a significant milestone in our project as we finalized the core architecture, including a fully operational program counter system. This allows precise control and management of instruction sequencing, critical for the execution efficiency of our software.
+
+April 22, 2024, 11:30 AM:
+Implemented the REM and REMU (Remainder and Remainder Unsigned) instructions. These are vital for operations requiring modulus calculations. Integration tests were conducted to ensure these instructions work seamlessly with the existing arithmetic logic, reinforcing the versatility of our instruction set.
+
+April 24, 2024, 3:50 PM:
+Focused on branch instructions today, specifically JAL (Jump and Link) and JALR (Jump and Link Register). These are crucial for implementing function calls and loops within our program. Rigorous testing was performed to ensure their interaction with the program counter is flawless, which is essential for maintaining the correct execution flow.
+
+April 26, 2024, 4:15 PM:
+Conducted a comprehensive review of all the implemented instructions and the overall program functionality. This included a detailed assessment of how the program counter integrates with various operational commands, ensuring that each component functions in harmony within our complex software environment.
+
+April 27, 2024, 11:00 PM:
+The day was spent refining the user interface and output display features. This enhances how the program's execution and the flow of control through the program counter are visualized, providing clearer insights during debugging and real-time operation.
